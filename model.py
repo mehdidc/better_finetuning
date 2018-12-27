@@ -1,5 +1,6 @@
 import torch.nn as nn
 from itertools import chain
+import torch
 
 class Model(nn.Module):
     
