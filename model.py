@@ -30,7 +30,7 @@ class Model(nn.Module):
         self.fc = nn.Linear(512 + 64, nb_classes)
 
     def parameters(self):
-        return chain([self.l1, self.l2, self.l3, self.l4, self.fc])
+        return chain([self.l1.parameters(), self.l2.parameters(), self.l3.parameters(), self.l4.parameters(), self.fc.parameters()])
 
     def forward(self, x):
         x = self.base_model.conv1(x)
