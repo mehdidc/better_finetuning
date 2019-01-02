@@ -9,6 +9,9 @@ class SameModel(nn.Module):
         self.base_model = base_model
         self.base_model.fc = nn.Linear(512, nb_classes)
     
+    def parameters(self):
+        return self.fc.parameters()
+
     def forward(self, x):
         return self.base_model(x)
 
@@ -53,26 +56,56 @@ class WiderModel(nn.Module):
         h = self.l1(x)
         
         x = self.base_model.layer2(x)
-        h = torch.cat((x, h), 1)
+        xn = L2Norm(128)(x)
+        hn = L2Norm(32)(h)
+        h = torch.cat((xn, hn), 1)
         h = self.l2(h)
 
         x = self.base_model.layer3(x)
-        h = torch.cat((x, h), 1)
+        xn = L2Norm(256)(x)
+        hn = L2Norm(64)(h)
+        h = torch.cat((xn, hn), 1)
         h = self.l3(h)
         
         x = self.base_model.layer4(x)
-        h = torch.cat((x, h), 1)
+        xn = L2Norm(512)(x)
+        hn = L2Norm(64)(h)
+        h = torch.cat((xn, hn), 1)
         h = self.l4(h)
 
-        x = torch.cat((x, h), 1)
+        xn = L2Norm(512)(x)
+        hn = L2Norm(64)(h)
+        x = torch.cat((xn, hn), 1)
         x = self.base_model.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
 
+
+class L2Norm(nn.Module):
+    def __init__(self,n_channels, scale=10):
+        super(L2Norm,self).__init__()
+        self.n_channels = n_channels
+        self.gamma = scale or None
+        self.eps = 1e-10
+        self.weight = nn.Parameter(torch.Tensor(self.n_channels))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.constant(self.weight,self.gamma)
+
+    def forward(self, x):
+        norm = x.pow(2).sum(dim=1, keepdim=True).sqrt()+self.eps
+        #x /= norm
+        x = torch.div(x,norm)
+        out = self.weight.unsqueeze(0).unsqueeze(2).unsqueeze(3).expand_as(x) * x
+        return out
+
+
 if __name__ == '__main__':
     from torchvision.models import resnet18
     import torch
-    net = Model(resnet18(pretrained=True))
+    net = WiderModel(resnet18(pretrained=True))
     x = torch.rand(1, 3, 224, 224)
-    net(x)
+    y = net(x)
+    print(y.size())
