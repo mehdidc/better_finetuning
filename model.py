@@ -2,7 +2,16 @@ import torch.nn as nn
 from itertools import chain
 import torch
 
-class Model(nn.Module):
+class SameModel(nn.Module):
+
+    def __init__(self, base_model, nb_classes=10):
+        self.base_model.fc = nn.Linear(512, nb_classes)
+    
+    def forward(self, x):
+        return self.base_model(x)
+
+
+class WiderModel(nn.Module):
     
     def __init__(self, base_model, nb_classes=10):
         super().__init__()
