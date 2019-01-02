@@ -5,6 +5,7 @@ import torch
 class SameModel(nn.Module):
 
     def __init__(self, base_model, nb_classes=10):
+        super().__init__()
         self.base_model = base_model
         self.base_model.fc = nn.Linear(512, nb_classes)
     
