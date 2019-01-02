@@ -64,31 +64,39 @@ class WiderModel(nn.Module):
         x = self.base_model.relu(x)
         x = self.base_model.maxpool(x)
 
-        x = self.base_model.layer1(x)
-        h = self.l1(x)
-        
-        x = self.base_model.layer2(x)
-        xn = self.l2_norm_x(x)
-        hn = self.l2_norm_h(h)
-        h = torch.cat((xn, hn), 1)
-        h = self.l2(h)
+        h1 = self.l1(x)
+        #h1
+        x1 = self.base_model.layer1(x)
+        #x1
 
-        x = self.base_model.layer3(x)
-        xn = self.l3_norm_x(x)
-        hn = self.l3_norm_h(h)
+        xn = self.l2_norm_x(x1)
+        hn = self.l2_norm_h(h1)
         h = torch.cat((xn, hn), 1)
-        h = self.l3(h)
-        
-        x = self.base_model.layer4(x)
-        xn = self.l4_norm_x(x)
-        hn = self.l4_norm_h(h)
+        h2 = self.l2(h)
+        #h2
+        x2 = self.base_model.layer2(x1)
+        #x2
+
+        xn = self.l3_norm_x(x2)
+        hn = self.l3_norm_h(h2)
         h = torch.cat((xn, hn), 1)
-        h = self.l4(h)
+        h3 = self.l3(h)
+        #h3
+        x3 = self.base_model.layer3(x2)
+        #x3
         
-        xn = self.l5_norm_x(x)
-        hn = self.l5_norm_h(h)
-        x = torch.cat((xn, hn), 1)
-        x = self.base_model.avgpool(x)
+        xn = self.l4_norm_x(x3)
+        hn = self.l4_norm_h(h3)
+        h = torch.cat((xn, hn), 1)
+        h4 = self.l4(h)
+        #h4
+        x4 = self.base_model.layer4(x3)
+        #x4
+        
+        xn = self.l5_norm_x(x4)
+        hn = self.l5_norm_h(h4)
+        x5 = torch.cat((xn, hn), 1)
+        x = self.base_model.avgpool(x5)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
