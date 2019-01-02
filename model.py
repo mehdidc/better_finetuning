@@ -22,25 +22,37 @@ class WiderModel(nn.Module):
         super().__init__()
         self.base_model = base_model
         self.l1 = nn.Sequential(
-            nn.Conv2d(64, 32, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(True),
-        )
-        self.l2 = nn.Sequential(
-            nn.Conv2d(128+32, 64, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
         )
+        self.l1_norm_x = L2Norm(64)
+        self.l1_norm_h = L2Norm(64)
+        self.l2 = nn.Sequential(
+            nn.Conv2d(128+64, 64, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(True),
+        )
+        self.l2_norm_x = L2Norm(128)
+        self.l2_norm_h = L2Norm(64)
+        
         self.l3 = nn.Sequential(
             nn.Conv2d(256+64, 64, kernel_size=3, stride=2, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
         )
+        self.l3_norm_x = L2Norm(256)
+        self.l3_norm_h = L2Norm(64)
         self.l4 = nn.Sequential(
             nn.Conv2d(512+64, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
         )
+        self.l4_norm_x = L2Norm(512)
+        self.l4_norm_h = L2Norm(64)
+        
+        self.l5_norm_x = L2Norm(512)
+        self.l5_norm_h = L2Norm(64)
         self.fc = nn.Linear(512 + 64, nb_classes)
 
     def parameters(self):
@@ -56,25 +68,25 @@ class WiderModel(nn.Module):
         h = self.l1(x)
         
         x = self.base_model.layer2(x)
-        xn = L2Norm(128)(x)
-        hn = L2Norm(32)(h)
+        xn = self.l2_norm_x(x)
+        hn = self.l2_norm_h(h)
         h = torch.cat((xn, hn), 1)
         h = self.l2(h)
 
         x = self.base_model.layer3(x)
-        xn = L2Norm(256)(x)
-        hn = L2Norm(64)(h)
+        xn = self.l3_norm_x(x)
+        hn = self.l3_norm_h(h)
         h = torch.cat((xn, hn), 1)
         h = self.l3(h)
         
         x = self.base_model.layer4(x)
-        xn = L2Norm(512)(x)
-        hn = L2Norm(64)(h)
+        xn = self.l4_norm_x(x)
+        hn = self.l4_norm_h(h)
         h = torch.cat((xn, hn), 1)
         h = self.l4(h)
-
-        xn = L2Norm(512)(x)
-        hn = L2Norm(64)(h)
+        
+        xn = self.l5_norm_x(x)
+        hn = self.l5_norm_h(h)
         x = torch.cat((xn, hn), 1)
         x = self.base_model.avgpool(x)
         x = x.view(x.size(0), -1)
