@@ -22,33 +22,33 @@ class WiderModel(nn.Module):
         super().__init__()
         self.base_model = base_model
         self.l1 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
         )
         self.l1_norm_x = L2Norm(64)
         self.l1_norm_h = L2Norm(64)
         self.l2 = nn.Sequential(
+            nn.Conv2d(64+64, 64, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(True),
+        )
+        self.l2_norm_x = L2Norm(64)
+        self.l2_norm_h = L2Norm(64)
+        
+        self.l3 = nn.Sequential(
             nn.Conv2d(128+64, 64, kernel_size=3, stride=2, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
         )
-        self.l2_norm_x = L2Norm(128)
-        self.l2_norm_h = L2Norm(64)
-        
-        self.l3 = nn.Sequential(
+        self.l3_norm_x = L2Norm(128)
+        self.l3_norm_h = L2Norm(64)
+        self.l4 = nn.Sequential(
             nn.Conv2d(256+64, 64, kernel_size=3, stride=2, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
         )
-        self.l3_norm_x = L2Norm(256)
-        self.l3_norm_h = L2Norm(64)
-        self.l4 = nn.Sequential(
-            nn.Conv2d(512+64, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(True),
-        )
-        self.l4_norm_x = L2Norm(512)
+        self.l4_norm_x = L2Norm(256)
         self.l4_norm_h = L2Norm(64)
         
         self.l5_norm_x = L2Norm(512)
@@ -76,7 +76,6 @@ class WiderModel(nn.Module):
         #h2
         x2 = self.base_model.layer2(x1)
         #x2
-
         xn = self.l3_norm_x(x2)
         hn = self.l3_norm_h(h2)
         h = torch.cat((xn, hn), 1)
@@ -116,7 +115,6 @@ class L2Norm(nn.Module):
 
     def forward(self, x):
         norm = x.pow(2).sum(dim=1, keepdim=True).sqrt()+self.eps
-        #x /= norm
         x = torch.div(x,norm)
         out = self.weight.unsqueeze(0).unsqueeze(2).unsqueeze(3).expand_as(x) * x
         return out
